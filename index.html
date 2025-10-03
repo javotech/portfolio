@@ -139,11 +139,20 @@ header.scrolled {
 .logo {
     font-size: 1.8rem;
     font-weight: 700;
-    color: var(--primary);
+    color: var(--dark);
     text-decoration: none;
+    transition: var(--transition);
 }
 
 .logo span {
+    color: var(--primary);
+}
+
+.logo:hover {
+    color: var(--primary);
+}
+
+.logo:hover span {
     color: var(--secondary);
 }
 
@@ -509,7 +518,7 @@ footer {
     height: 40px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 50%;
-    color: white;
+    color: #a8d8ff;
     text-decoration: none;
     transition: var(--transition);
 }
