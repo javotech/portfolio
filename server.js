@@ -1,51 +1,37 @@
-require('dotenv').config();
-const express = require('express');
-const nodemailer = require('nodemailer');
-const bodyParser = require('body-parser');
-const app = express();
-const PORT = 3000;
+const { Resend } = require('resend');
 
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
 
-// Serve static files (your portfolio)
-app.use(express.static('public'));
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-app.get('/api/data', (req, res) => {
-    res.json({ message: 'Data from server' });
-});
 
-// Contact form endpoint
 app.post('/api/contact', async (req, res) => {
-    const { name, email, subject, message } = req.body;
+  const { name, email, subject, message } = req.body;
 
+  if (!name || !email || !subject || !message) {
+    return res.status(400).json({ message: 'Please fill in all fields.' });
+  }
 
-    // Configure your email transport
-    let transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-        }
+  try {
+    
+    const { data, error } = await resend.emails.send({
+      from: 'Your Portfolio <onboarding@resend.dev>', 
+      to: ['javotech.dev@gmail.com'],
+      replyTo: email, 
+      subject: `Portfolio Contact: ${subject}`,
+      html: `<p><strong>Name:</strong> ${name}</p>
+             <p><strong>Email:</strong> ${email}</p>
+             <p><strong>Message:</strong><br>${message}</p>`,
     });
 
-    // Email options
-    let mailOptions = {
-        from: email,
-        to: process.env.EMAIL_USER,
-        subject: `Portfolio Contact: ${subject}`,
-        text: `Name: ${name}\nEmail: ${email}\nMessage:\n${message}`
-    };
-
-    try {
-        await transporter.sendMail(mailOptions);
-        res.status(200).json({ message: 'Message sent successfully!' });
-    } catch (error) {
-        console.error('Full error:', error);
-        res.status(500).json({ message: 'Failed to send message.' });
+    if (error) {
+      console.error('Resend API Error:', error);
+      return res.status(500).json({ message: 'Failed to send message.' });
     }
-});
 
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-}); 
+    console.log('Email sent successfully:', data);
+    res.status(200).json({ message: 'Message sent successfully!' });
+  } catch (error) {
+    console.error('Server Error:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
